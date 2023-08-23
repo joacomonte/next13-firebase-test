@@ -1,95 +1,52 @@
-import Image from 'next/image'
+'use client'
+
 import styles from './page.module.css'
+import { initializeApp } from "firebase/app";
+import { useState } from "react"; // Import useState
+import { getFirestore, collection, addDoc, getDocs } from "firebase/firestore";
+
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB8XbIQfHMBZqwAtk2OIRHVY9j4Qo3EFMc",
+  authDomain: "next13-portfolio.firebaseapp.com",
+  projectId: "next13-portfolio",
+  storageBucket: "next13-portfolio.appspot.com",
+  messagingSenderId: "77450168588",
+  appId: "1:77450168588:web:2b96ee9f4ec72642a06129"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 export default function Home() {
+  const [inputValue, setInputValue] = useState(""); // State to hold user input
+
+  async function createCollectionAndAddDocument() {
+    const collectionRef = collection(db, "yourCollectionName");
+  
+    const collectionSnapshot = await getDocs(collectionRef);
+  
+    if (collectionSnapshot.size === 0) {
+      await addDoc(collectionRef, { yourField: inputValue });
+      console.log("Collection and document created.");
+    } else {
+      console.log("Collection already exists");
+    }
+  }
+  
+
   return (
     <main className={styles.main}>
       <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+        <p>Description</p>
+        <input
+          type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          placeholder="Enter a value"
         />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+        <button onClick={createCollectionAndAddDocument}>Create Collection and Document</button>
       </div>
     </main>
-  )
+  );
 }
