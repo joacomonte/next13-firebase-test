@@ -1,10 +1,17 @@
-'use client'
+"use client";
 
-import styles from './page.module.css'
+import styles from "./page.module.css";
 import { FirebaseError, initializeApp } from "firebase/app";
 import { useEffect, useState } from "react"; // Import useState
 import { getFirestore, collection, addDoc, getDocs } from "firebase/firestore";
-import { UploadTask, getDownloadURL, getStorage, listAll, ref, uploadBytesResumable } from 'firebase/storage';
+import {
+  UploadTask,
+  getDownloadURL,
+  getStorage,
+  listAll,
+  ref,
+  uploadBytesResumable,
+} from "firebase/storage";
 
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -14,7 +21,7 @@ const firebaseConfig = {
   projectId: "next13-portfolio",
   storageBucket: "next13-portfolio.appspot.com",
   messagingSenderId: "77450168588",
-  appId: "1:77450168588:web:2b96ee9f4ec72642a06129"
+  appId: "1:77450168588:web:2b96ee9f4ec72642a06129",
 };
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -24,19 +31,17 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null);
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [uploadTask, setUploadTask] = useState<UploadTask | null>(null);
-
   const [imageUrls, setImageUrls] = useState<string[]>([]);
-
   const [percent, setPercent] = useState(0);
 
   useEffect(() => {
     const fetchImages = async () => {
       const storage = getStorage(app);
-      const imagesRef = ref(storage, 'images');
+      const imagesRef = ref(storage, "images");
 
       try {
         const res = await listAll(imagesRef);
-        const urlPromises = res.items.map(itemRef => getDownloadURL(itemRef));
+        const urlPromises = res.items.map((itemRef) => getDownloadURL(itemRef));
         const urls = await Promise.all(urlPromises);
         setImageUrls(urls);
       } catch (error) {
@@ -45,7 +50,7 @@ export default function Home() {
     };
 
     fetchImages();
-  }, []); 
+  }, []);
 
   const handleAddString = async () => {
     const collectionRef = collection(db, "yourCollectionName");
@@ -106,41 +111,63 @@ export default function Home() {
 
   return (
     <main className={styles.main}>
-      
-      <div className={styles.description}>
-        <div className={styles.card}>
+      <div className={styles.card} style={{ width: "100%" }}>
+        <h2>Test to save string into Firebase DB</h2>
+        <input
+          type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          placeholder="Enter a value"
+        />
+        <button className={styles.darkButton} onClick={handleAddString}>
+          Save
+        </button>
+      </div>
+
+      <div className={styles.card} style={{ width: "100%" }}>
+        <h2>Upload any image</h2>
+        <div>
+          <label htmlFor="fileUpload" className={styles.darkButton}>
+            Select an image
+          </label>
           <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Enter a value"
+            id="fileUpload"
+            type="file"
+            accept="image/*"
+            onChange={handleFileSelection}
+            hidden
           />
-          <button onClick={handleAddString}>Save string into db</button>
         </div>
-        
-        <div className={styles.card}>
-          <input type="file" accept="image/*" onChange={handleFileSelection} />
-          <button onClick={handleUploadToFirebase}>Upload to Firebase</button>
-          <button onClick={handlePauseUpload}>
-            {isPaused ? "Resume" : "Pause"} Upload
-          </button>
-        </div>
-  
+
+        <button
+          className={styles.darkButton}
+          onClick={handleUploadToFirebase}
+          aria-label="Upload image to Firebase"
+        >
+          Upload to Firebase
+        </button>
+
+        <button
+          className={styles.darkButton}
+          onClick={handlePauseUpload}
+          aria-label={isPaused ? "Resume upload" : "Pause upload"}
+        >
+          {isPaused ? "Resume" : "Pause"} Upload
+        </button>
+
         <p className={styles.code}>{percent} % done</p>
       </div>
-      
-      <div className={styles.card}>
+
+      <div className={styles.card} style={{ width: "100%" }}>
         <h2>Uploaded Images</h2>
         <div className={styles.grid}>
           {imageUrls.map((url, index) => (
             <div key={index}>
-              <img src={url} alt="Uploaded" width={100} height={100} />
+              <img src={url} alt="Uploaded" width={200} height={200} />
             </div>
           ))}
         </div>
       </div>
-  
     </main>
   );
 }
-
