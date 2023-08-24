@@ -227,3 +227,55 @@
     transform: rotate(0deg);
   }
 }
+
+
+.darkButton {
+  display: flex;
+  justify-content: center;
+  width: fit-content;
+  align-items: center;
+  padding: 0.4rem 0.6rem;
+  margin: 1rem 0;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 1rem;
+  background-color: rgba(var(--card-rgb), 0.2); /* Adjusted opacity to be slightly more prominent for button */
+  border: 1px solid rgba(var(--card-border-rgb), 0.5);
+  border-radius: var(--border-radius);
+  transition: background 200ms, border 200ms, transform 150ms;
+  cursor: pointer;
+  color: #FFF; /* Assuming white font color for dark theme, adjust as needed */
+  text-decoration: none; /* Useful if the button is an anchor link */
+}
+
+/* Input file styling */
+.darkButtonFile {
+  display: none;
+  padding: 0.4rem 0.6rem;
+  margin: 1rem 0;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 1rem;
+  background-color: rgba(var(--card-rgb), 0.2); /* Adjusted opacity to be slightly more prominent for button */
+  border: 1px solid rgba(var(--card-border-rgb), 0.5);
+  border-radius: var(--border-radius);
+  transition: background 200ms, border 200ms, transform 150ms;
+  cursor: pointer;
+  color: #FFF; /* Assuming white font color for dark theme, adjust as needed */
+  text-decoration: none; /* Useful if the button is an anchor link */
+}
+
+/* Button hover styling for non-touch devices */
+@media (hover: hover) and (pointer: fine) {
+  .darkButton:hover {
+    background-color: rgba(var(--card-rgb), 0.5); /* Slightly adjusted for a hover effect */
+    border: 1px solid rgba(var(--card-border-rgb), 0.7);
+    transform: translateY(-2px); /* Small lift effect on hover */
+  }
+}
+
+/* Button active state */
+.darkButton:active {
+  transform: translateY(0); /* Reset translateY on active press */
+  background-color: rgba(var(--card-rgb), 1); /* Full opacity on active press */
+}
