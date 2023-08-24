@@ -1,56 +1,53 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import styles from "./page.module.css";
-import { FirebaseError, initializeApp } from "firebase/app";
-import { useEffect, useState } from "react"; // Import useState
-import { getFirestore, collection, addDoc, getDocs } from "firebase/firestore";
+import { FirebaseError } from "firebase/app";
+import { Suspense, useState } from "react"; // Import useState
+import { collection, addDoc, getDocs } from "firebase/firestore";
+import Image from "next/image";
+import { db, app } from "./firebaseConfig";
+
 import {
   UploadTask,
   getDownloadURL,
   getStorage,
   listAll,
   ref,
-  uploadBytesResumable,
 } from "firebase/storage";
 
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-const firebaseConfig = {
-  apiKey: "AIzaSyB8XbIQfHMBZqwAtk2OIRHVY9j4Qo3EFMc",
-  authDomain: "next13-portfolio.firebaseapp.com",
-  projectId: "next13-portfolio",
-  storageBucket: "next13-portfolio.appspot.com",
-  messagingSenderId: "77450168588",
-  appId: "1:77450168588:web:2b96ee9f4ec72642a06129",
-};
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+import { UploadManager } from "./helpers/uploadManager";
+import { set } from "firebase/database";
 
 export default function Home() {
+  const [uploadManager, setUploadManager] = useState<any>(null);
   const [inputValue, setInputValue] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [isPaused, setIsPaused] = useState<boolean>(false);
-  const [uploadTask, setUploadTask] = useState<UploadTask | null>(null);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [imgUrlsList, setImgUrlsList] = useState<string[]>([]);
+  const [imgsLoading, setImgsLoading] = useState(false);
+  const [firstImgFetch, setFirstImgFetch] = useState(false);
   const [percent, setPercent] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
 
-  useEffect(() => {
-    const fetchImages = async () => {
-      const storage = getStorage(app);
-      const imagesRef = ref(storage, "images");
+  const handleLoadImgs = async () => {
+    setFirstImgFetch(true);
+    setImgsLoading(true);
 
-      try {
-        const res = await listAll(imagesRef);
-        const urlPromises = res.items.map((itemRef) => getDownloadURL(itemRef));
-        const urls = await Promise.all(urlPromises);
-        setImageUrls(urls);
-      } catch (error) {
-        console.error("Error listing images:", error);
-      }
-    };
+    const storage = getStorage(app);
+    const imagesRef = ref(storage, "images");
 
-    fetchImages();
-  }, []);
+    try {
+      const res = await listAll(imagesRef);
+      const urlPromises = res.items.map((itemRef) => getDownloadURL(itemRef));
+      const urls = await Promise.all(urlPromises);
+      setImgUrlsList(urls);
+    } catch (error) {
+      console.error("Error listing images:", error);
+    } finally {
+      setImgsLoading(false); // Set the loading state to false once done, regardless of success or error
+    }
+  };
 
   const handleAddString = async () => {
     const collectionRef = collection(db, "yourCollectionName");
@@ -71,17 +68,15 @@ export default function Home() {
     }
   };
 
-  const handleUploadToFirebase = async () => {
+  const handleUploadToFirebase = () => {
     if (file) {
-      const storage = getStorage(app);
-      const storageRef = ref(storage, "images/" + file.name);
-      const uploadTask: UploadTask = uploadBytesResumable(storageRef, file);
+      setIsUploading(true); // Set isUploading to true when starting the upload
 
-      setUploadTask(uploadTask); // Save uploadTask in state
+      const manager = UploadManager(file, app);
+      setUploadManager(manager);
 
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
+      manager.startUpload(
+        (snapshot: any) => {
           const progressPercent = Math.round(
             (snapshot.bytesTransferred / snapshot.totalBytes) * 100
           );
@@ -89,24 +84,42 @@ export default function Home() {
         },
         (error: FirebaseError) => {
           console.error("Error uploading file:", error);
+          setIsUploading(false); // Set isUploading to false on error
         },
         async () => {
           try {
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            const downloadURL = await getDownloadURL(manager.task.snapshot.ref);
             console.log("File uploaded:", downloadURL);
           } catch (error) {
             console.error("Error getting download URL:", error);
           }
+          setIsUploading(false); // Set isUploading to false on completion
+          setFile(null);
+          setPercent(0);
         }
       );
     }
   };
 
-  const handlePauseUpload = () => {
-    if (uploadTask) {
-      uploadTask.pause();
-      setIsPaused(true); // Update pause status
+  const togglePauseResumeUpload = () => {
+    if (uploadManager) {
+      if (uploadManager.isPaused()) {
+        uploadManager.resumeUpload();
+        setIsPaused(false);
+      } else {
+        uploadManager.pauseUpload();
+        setIsPaused(true);
+      }
     }
+  };
+
+  const cancelUpload = () => {
+    if (uploadManager) {
+      uploadManager.cancelUpload();
+    }
+    setIsPaused(false);
+    setFile(null);
+    setPercent(0);
   };
 
   return (
@@ -125,48 +138,76 @@ export default function Home() {
       </div>
 
       <div className={styles.card} style={{ width: "100%" }}>
-        <h2>Upload any image</h2>
+        <h2>Upload any image to Firebase Storage</h2>
+        {!file ? (
+          <>
+            <div>
+              <label htmlFor="fileUpload" className={styles.darkButton}>
+                Select an image
+              </label>
+              <input
+                id="fileUpload"
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelection}
+                hidden
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <button
+              className={styles.darkButton}
+              onClick={handleUploadToFirebase}
+              aria-label="Upload image to Firebase"
+            >
+              {`Confirm upload "${file.name}"`}
+            </button>
+
+            <button className={styles.darkButton} onClick={cancelUpload}>
+              Cancel
+            </button>
+
+            {isUploading && (
+              <>
+                <button
+                  className={styles.darkButton}
+                  onClick={togglePauseResumeUpload}
+                  aria-label={isPaused ? "Resume upload" : "Pause upload"}
+                >
+                  {isPaused ? "Resume" : "Pause"} Upload
+                </button>
+              </>
+            )}
+
+          </>
+        )}
+
         <div>
-          <label htmlFor="fileUpload" className={styles.darkButton}>
-            Select an image
-          </label>
-          <input
-            id="fileUpload"
-            type="file"
-            accept="image/*"
-            onChange={handleFileSelection}
-            hidden
-          />
+          {percent !== 0 && <p className={styles.code}>{percent} % done</p>}
         </div>
-
-        <button
-          className={styles.darkButton}
-          onClick={handleUploadToFirebase}
-          aria-label="Upload image to Firebase"
-        >
-          Upload to Firebase
-        </button>
-
-        <button
-          className={styles.darkButton}
-          onClick={handlePauseUpload}
-          aria-label={isPaused ? "Resume upload" : "Pause upload"}
-        >
-          {isPaused ? "Resume" : "Pause"} Upload
-        </button>
-
-        <p className={styles.code}>{percent} % done</p>
       </div>
 
       <div className={styles.card} style={{ width: "100%" }}>
         <h2>Uploaded Images</h2>
-        <div className={styles.grid}>
-          {imageUrls.map((url, index) => (
-            <div key={index}>
-              <img src={url} alt="Uploaded" width={200} height={200} />
-            </div>
-          ))}
-        </div>
+
+        <button className={styles.darkButton} onClick={handleLoadImgs}>
+          {firstImgFetch ? "Refresh" : "Load images"}
+        </button>
+
+        {imgsLoading ? (
+          <h4 style={{ margin: "30px 0" }}>loading</h4>
+        ) : imgUrlsList.length === 0 && firstImgFetch ? (
+          <h4 style={{ margin: "30px 0" }}>There are no images uploaded.</h4>
+        ) : (
+          <div className={styles.grid}>
+            {imgUrlsList.map((url, index) => (
+              <div key={index}>
+                <Image src={url} alt="Uploaded" width={200} height={200} />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </main>
   );
