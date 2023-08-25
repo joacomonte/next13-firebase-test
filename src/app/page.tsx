@@ -2,22 +2,21 @@
 "use client";
 
 import styles from "./page.module.css";
-import { FirebaseError } from "firebase/app";
-import { Suspense, useState } from "react"; // Import useState
-import { collection, addDoc, getDocs } from "firebase/firestore";
+
+// React Related ------------
+import { useState } from "react"; 
 import Image from "next/image";
-import { db, app } from "./firebaseConfig";
 
-import {
-  UploadTask,
-  getDownloadURL,
-  getStorage,
-  listAll,
-  ref,
-} from "firebase/storage";
+// Firebase related ---------
+import { db, app } from "../../firebaseConfig";
+import { FirebaseError } from "firebase/app";
+import { collection, addDoc, getDocs } from "firebase/firestore";
+import {getDownloadURL, getStorage, listAll, ref,} from "firebase/storage";
 
+// Helpers related ---------
 import { UploadManager } from "./helpers/uploadManager";
-import { set } from "firebase/database";
+
+
 
 export default function Home() {
   const [uploadManager, setUploadManager] = useState<any>(null);
@@ -49,7 +48,8 @@ export default function Home() {
     }
   };
 
-  const handleAddString = async () => {
+  const handleAddString = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     const collectionRef = collection(db, "yourCollectionName");
     const collectionSnapshot = await getDocs(collectionRef);
 
@@ -124,20 +124,24 @@ export default function Home() {
 
   return (
     <main className={styles.main}>
-      <div className={styles.card} style={{ width: "100%" }}>
+
+      <h1 className={styles.title}>Firebase Services Tests</h1>
+
+      <form className={styles.card} style={{ width: "100%" }} onSubmit={handleAddString}>
         <h2>Test to save string into Firebase DB</h2>
         <input
           type="text"
+          className={styles.darkInput}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          placeholder="Enter a value"
+          placeholder="e.g. Testing phrase"
         />
-        <button className={styles.darkButton} onClick={handleAddString}>
+        <button className={styles.darkButton} type="submit">
           Save
         </button>
-      </div>
+      </form>
 
-      <div className={styles.card} style={{ width: "100%" }}>
+      <section className={styles.card} style={{ width: "100%" }}>
         <h2>Upload any image to Firebase Storage</h2>
         {!file ? (
           <>
@@ -158,37 +162,40 @@ export default function Home() {
           <>
             <button
               className={styles.darkButton}
+              style={{ backgroundColor: "rgba(0, 100, 0, 0.5)" }}
               onClick={handleUploadToFirebase}
               aria-label="Upload image to Firebase"
             >
               {`Confirm upload "${file.name}"`}
             </button>
 
-            <button className={styles.darkButton} onClick={cancelUpload}>
-              Cancel
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <button
+                className={styles.darkButton}
+                style={{ backgroundColor: "rgba(139, 0, 0, 0.5)" }}
+                onClick={cancelUpload}
+              >
+                Cancel
+              </button>
 
-            {isUploading && (
-              <>
+              {isUploading && (
                 <button
+                  style={{ marginRight: "10px" }}
                   className={styles.darkButton}
                   onClick={togglePauseResumeUpload}
                   aria-label={isPaused ? "Resume upload" : "Pause upload"}
                 >
                   {isPaused ? "Resume" : "Pause"} Upload
                 </button>
-              </>
-            )}
-
+              )}
+            </div>
           </>
         )}
 
-        <div>
-          {percent !== 0 && <p className={styles.code}>{percent} % done</p>}
-        </div>
-      </div>
+        {percent !== 0 && <p className={styles.code}>{percent} % done</p>}
+      </section>
 
-      <div className={styles.card} style={{ width: "100%" }}>
+      <section className={styles.card} style={{ width: "100%" }}>
         <h2>Uploaded Images</h2>
 
         <button className={styles.darkButton} onClick={handleLoadImgs}>
@@ -208,7 +215,7 @@ export default function Home() {
             ))}
           </div>
         )}
-      </div>
+      </section>
     </main>
   );
 }

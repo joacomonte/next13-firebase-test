@@ -38,6 +38,9 @@
   --callout-border-rgb: 172, 175, 176;
   --card-rgb: 180, 185, 188;
   --card-border-rgb: 131, 134, 135;
+
+  --fontH1: clamp(25px, calc(25px + 1vw), 35px);
+  --fontH2: clamp(15px, calc(15px + 1vw), 20px);
 }
 
 @media (prefers-color-scheme: dark) {
