@@ -4,38 +4,36 @@
 import styles from "./page.module.css";
 
 // React Related ------------
-import { useState } from "react"; 
-import Image from "next/image";
+import { useState } from "react";
 
 // Firebase related ---------
 import { db, app } from "../../firebaseConfig";
 import { FirebaseError } from "firebase/app";
 import { collection, addDoc, getDocs } from "firebase/firestore";
-import {getDownloadURL, getStorage, listAll, ref,} from "firebase/storage";
+import { getDownloadURL, getStorage, listAll, ref } from "firebase/storage";
 
 // Helpers related ---------
 import { UploadManager } from "./helpers/uploadManager";
+import LoadingImage from "./components/LoadingImg";
 
-
+type LoadingStatus = {
+  [key: string]: boolean;
+};
 
 export default function Home() {
   const [uploadManager, setUploadManager] = useState<any>(null);
   const [inputValue, setInputValue] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [isPaused, setIsPaused] = useState<boolean>(false);
-  const [imgUrlsList, setImgUrlsList] = useState<string[]>([]);
-  const [imgsLoading, setImgsLoading] = useState(false);
-  const [firstImgFetch, setFirstImgFetch] = useState(false);
+
   const [percent, setPercent] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
 
-  const handleLoadImgs = async () => {
-    setFirstImgFetch(true);
-    setImgsLoading(true);
+  const [imgUrlsList, setImgUrlsList] = useState<string[]>([]);
 
+  const handleLoadImgs = async () => {
     const storage = getStorage(app);
     const imagesRef = ref(storage, "images");
-
     try {
       const res = await listAll(imagesRef);
       const urlPromises = res.items.map((itemRef) => getDownloadURL(itemRef));
@@ -43,8 +41,6 @@ export default function Home() {
       setImgUrlsList(urls);
     } catch (error) {
       console.error("Error listing images:", error);
-    } finally {
-      setImgsLoading(false); // Set the loading state to false once done, regardless of success or error
     }
   };
 
@@ -124,10 +120,13 @@ export default function Home() {
 
   return (
     <main className={styles.main}>
-
       <h1 className={styles.title}>Firebase Services Tests</h1>
 
-      <form className={styles.card} style={{ width: "100%" }} onSubmit={handleAddString}>
+      <form
+        className={styles.card}
+        style={{ width: "100%" }}
+        onSubmit={handleAddString}
+      >
         <h2>Test to save string into Firebase DB</h2>
         <input
           type="text"
@@ -199,22 +198,20 @@ export default function Home() {
         <h2>Uploaded Images</h2>
 
         <button className={styles.darkButton} onClick={handleLoadImgs}>
-          {firstImgFetch ? "Refresh" : "Load images"}
+          Load images
         </button>
 
-        {imgsLoading ? (
-          <h4 style={{ margin: "30px 0" }}>loading</h4>
-        ) : imgUrlsList.length === 0 && firstImgFetch ? (
-          <h4 style={{ margin: "30px 0" }}>There are no images uploaded.</h4>
-        ) : (
-          <div className={styles.grid}>
-            {imgUrlsList.map((url, index) => (
-              <div key={index}>
-                <Image src={url} alt="Uploaded" width={200} height={200} />
-              </div>
-            ))}
-          </div>
-        )}
+        <div>
+          {imgUrlsList.map((url, idx) => (
+            <LoadingImage
+              key={idx}
+              src={url}
+              alt={`Image ${idx}`}
+              width={300}
+              height={300}
+            />
+          ))}
+        </div>
       </section>
     </main>
   );
