@@ -201,7 +201,7 @@ export default function Home() {
           Load images
         </button>
 
-        <div>
+        <div style={{display: 'flex'}}>
           {imgUrlsList.map((url, idx) => (
             <LoadingImage
               key={idx}
