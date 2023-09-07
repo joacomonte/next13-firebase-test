@@ -207,8 +207,6 @@ export default function Home() {
               key={idx}
               src={url}
               alt={`Image ${idx}`}
-              width={300}
-              height={300}
             />
           ))}
         </div>

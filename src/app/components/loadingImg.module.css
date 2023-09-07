@@ -1,14 +1,19 @@
 /* styles.css */
 .loadingContainer {
-    width: 300px;
-    height: 300px;
-    border: 1px solid grey;
-    display: flex;
-    justify-content: center;
-    align-items: center; /* This will vertically and horizontally center the child elements */
-  }
+  width: 300px;
+  height: 300px;
+  border: 1px solid grey;
+  display: flex;
+  justify-content: center;
+  align-items: center; /* This will vertically and horizontally center the child elements */
+}
   
-  .loadingText {
-    font-size: 16px; /* Or any size you prefer */
-  }
+.loadingText {
+  font-size: 16px; /* Or any size you prefer */
+}
   
+.imgContainer{
+  position: relative;
+  width: 300px;
+  height: 300px;
+}

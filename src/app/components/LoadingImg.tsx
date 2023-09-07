@@ -6,21 +6,20 @@ import styles from "./loadingImg.module.css"
 interface LoadingImageProps {
   src: string;
   alt: string;
-  width: number;
-  height: number;
+
 }
 
-const LoadingImage: React.FC<LoadingImageProps> = ({ src, alt, width, height }) => {
+const LoadingImage: React.FC<LoadingImageProps> = ({ src, alt }) => {
   const [loaded, setLoaded] = useState(false);
 
   return (
-    <div>
-      {!loaded && <div>Loading...</div>}
+    <div className={styles.imgContainer}>
+      {/* {!loaded && <div>Loading...</div>} */}
       <Image 
         src={src} 
         alt={alt} 
-        width={width}
-        height={height}
+        objectFit="contain"
+        fill
         onLoad={() => setLoaded(true)}
       />
     </div>
